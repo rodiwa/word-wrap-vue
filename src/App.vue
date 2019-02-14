@@ -5,12 +5,12 @@
         <h3>That Word Wrap Thingie</h3>
       </div>
       <div class="right nav">
-        <li class="links">Login</li>
-        <li class="links">Sign Out</li>
+        <li v-if="!isUserLoggedIn" class="links">Login</li>
+        <li v-if="isUserLoggedIn" class="links">Sign Out</li>
       </div>
     </header>
     <section>
-      <div class="words"></div>
+      <div class="words" v-bind:class="{remove: isRemoveWordEnabled}"></div>
       <form id="add-word-form" @submit.prevent="addNewWord" class="addWord none">
         <input type="text" id="addWordInput" autocomplete="off" placeholder="Add Word">
         <button type="reset" id="cancel" @click="hideAddWordForm">Cancel</button>
@@ -18,6 +18,8 @@
       <div class="controls">
         <button id="addWord" @click="showAddWordForm">Add</button>
         <button id="clearWords" @click="clearAllWords">Clear All</button>
+        <button v-if="!isRemoveWordEnabled" id="removeWordsEnable" @click="removeWordsToggle">Remove Words</button>
+        <button v-if="isRemoveWordEnabled" id="removeWordsDisable" @click="removeWordsToggle">Done Removing Words</button>
       </div>
     </section>
   </div>
@@ -26,10 +28,17 @@
 <script>
 import firestore from "./firebase/init";
 import { getCurrentSize, getNextSize } from './utils'
+import { store } from './store'
 
 export default {
   name: "app",
   components: {},
+  computed: {
+    isRemoveWordEnabled: (context) =>
+      context.$store.state.isRemoveModeEnabled,
+    isUserLoggedIn: (context) =>
+      context.$store.state.isUserLoggedIn
+  },
   mounted: () => {
     // get data from firestore and setup initial view
     firestore.collection("words").onSnapshot(snapshot => {
@@ -50,14 +59,20 @@ export default {
 
       // change word size on single click
       const addedWords = document.querySelectorAll("span.word");
+      // const store = new Vuex.Store()
 
       addedWords.forEach(word => {
-        word.addEventListener("click", w => {
+        word.addEventListener("click", function(w) {
           const id = w.target.id
-          const currentSize = getCurrentSize(w.target.classList)
-          const nextSize = getNextSize(currentSize)
-          
-          firestore.collection('words').doc(id).update({ size: nextSize })
+          if (store.state.isRemoveModeEnabled) {
+            // remove words from firebase
+            firestore.collection('words').doc(id).delete()
+          } else {
+            // change size of words only
+            const currentSize = getCurrentSize(w.target.classList)
+            const nextSize = getNextSize(currentSize)
+            firestore.collection('words').doc(id).update({ size: nextSize })
+          }
         });
       });
 
@@ -77,7 +92,6 @@ export default {
       wordInput.classList.remove("none");
       addWordInput.focus()
       controls.classList.add('none')
-
     },
     hideAddWordForm: () => {
       const wordInput = document.querySelector("#add-word-form");
@@ -94,9 +108,7 @@ export default {
       const addWordInput = document.querySelector("#addWordInput");
       const controls = document.querySelector('.controls')
       const addWordButton = document.getElementById('addWord')
-
       const newWord = addWordInput.value;
-
       // clear input fields and hide form
       addWordForm.classList.add("none");
       addWordInput.value = "";
@@ -114,6 +126,9 @@ export default {
           firestore.collection('words').doc(doc.id).delete()
         })
       })
+    },
+    removeWordsToggle: function () {
+      this.$store.commit('toggleRemoveWordMode')
     }
   }
 };
@@ -139,6 +154,7 @@ body {
   margin: 0;
   padding: 0;
   height: 100%;
+  user-select: none;
 }
 
 #app {
@@ -165,6 +181,14 @@ button {
   font-family: "ps", "Avenir", Helvetica, Arial, sans-serif;
   font-size: 1em;
   cursor: pointer;
+}
+
+button#removeWordsDisable {
+  background-color: green;
+}
+
+button#removeWordsEnable {
+  background-color: red;
 }
 
 input {
@@ -217,10 +241,14 @@ section .words {
 
 /* styles for words */
 .words > span {
-  padding: 0 0.5em;
+  padding: 0 0.2em;
   cursor: pointer;
   display: flex;
   align-items: center;
+}
+
+.words.remove {
+  color: red
 }
 
 .words > span.small {
