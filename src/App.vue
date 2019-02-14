@@ -165,6 +165,8 @@ body {
   color: #2c3e50;
   font-size: 1em;
   height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .none {
@@ -172,7 +174,7 @@ body {
 }
 
 button {
-  margin: 1em;
+  margin: 0.3em;
   padding: 0.5em 1em;
   background-color: navy;
   color: white;
@@ -192,7 +194,7 @@ button#removeWordsEnable {
 }
 
 input {
-  margin: 1em;
+  margin: 0.3em;
   padding: 0.5em 1em;
   font-size: 1em;
   border-radius: 0.3em;
@@ -229,6 +231,10 @@ section {
   padding: 1em;
   max-width: 1024px;
   margin: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
 }
 
 section .words {
@@ -237,6 +243,8 @@ section .words {
   flex-wrap: wrap;
   justify-content: center;
   margin: 5em 0;
+  height: 100%;
+  align-items: center;
 }
 
 /* styles for words */
@@ -245,6 +253,7 @@ section .words {
   cursor: pointer;
   display: flex;
   align-items: center;
+  height: fit-content;
 }
 
 .words.remove {
