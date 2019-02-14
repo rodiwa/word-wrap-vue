@@ -83,18 +83,25 @@ export default {
       const wordInput = document.querySelector("#add-word-form");
       const addWordInput = document.querySelector("#addWordInput");
       const controls = document.querySelector('.controls')
+      const addWordButton = document.getElementById('addWord')
       wordInput.classList.add("none");
       addWordInput.value = "";
       controls.classList.remove('none')
+      addWordButton.focus()
     },
     addNewWord: () => {
       const addWordForm = document.querySelector("#add-word-form");
       const addWordInput = document.querySelector("#addWordInput");
+      const controls = document.querySelector('.controls')
+      const addWordButton = document.getElementById('addWord')
+
       const newWord = addWordInput.value;
 
       // clear input fields and hide form
       addWordForm.classList.add("none");
       addWordInput.value = "";
+      controls.classList.remove('none')
+      addWordButton.focus()
 
       firestore.collection("words").add({
         word: newWord,
@@ -131,6 +138,7 @@ html,
 body {
   margin: 0;
   padding: 0;
+  height: 100%;
 }
 
 #app {
@@ -140,6 +148,7 @@ body {
   text-align: center;
   color: #2c3e50;
   font-size: 1em;
+  height: 100%;
 }
 
 .none {
@@ -194,6 +203,8 @@ header h3 {
 
 section {
   padding: 1em;
+  max-width: 1024px;
+  margin: auto;
 }
 
 section .words {
@@ -201,6 +212,7 @@ section .words {
   flex-direction: row;
   flex-wrap: wrap;
   justify-content: center;
+  margin: 5em 0;
 }
 
 /* styles for words */
