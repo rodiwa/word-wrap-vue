@@ -1,158 +1,140 @@
 <template>
   <div id="app">
-      <header>
-        <div class="left">
-          <h3>Word Wrap 2019</h3>
-        </div>
-        <div class="right nav">
-          <li class="links">Login</li>
-          <li class="links">Sign Out</li>
-        </div>
-      </header>
-      <section>
-        <div class="words">
-          
-        </div>
-        <form id="add-word-form" @submit.prevent="addWordToList" class="addWord none">
-          <input type="text" id="addWordInput" placeholder="Add Word"/>
-          <button type="reset" id="cancel" @click="cancelAddWord">Cancel</button>
-        </form>
-        <div class="controls">
-          <button id="addWord" @click="addWord">Add</button>
-          <button id="clearWords" @click="cancelAddWord">Clear</button>
-        </div>
-      </section>
+    <header>
+      <div class="left">
+        <h3>That Word Wrap Thingie</h3>
+      </div>
+      <div class="right nav">
+        <li class="links">Login</li>
+        <li class="links">Sign Out</li>
+      </div>
+    </header>
+    <section>
+      <div class="words"></div>
+      <form id="add-word-form" @submit.prevent="addNewWord" class="addWord none">
+        <input type="text" id="addWordInput" autocomplete="off" placeholder="Add Word">
+        <button type="reset" id="cancel" @click="hideAddWordForm">Cancel</button>
+      </form>
+      <div class="controls">
+        <button id="addWord" @click="showAddWordForm">Add</button>
+        <button id="clearWords" @click="clearAllWords">Clear All</button>
+      </div>
+    </section>
   </div>
 </template>
 
 <script>
-import firestore from './firebase/init'
-export default {
-  name: 'app',
-  components: {
+import firestore from "./firebase/init";
+import { getCurrentSize, getNextSize } from './utils'
 
-  },
+export default {
+  name: "app",
+  components: {},
   mounted: () => {
     // get data from firestore and setup initial view
-    firestore.collection('words').onSnapshot(snapshot => {
-      // set init words
-    const words = [
-      {
-        word: 'HTML',
-        size: 'medium'
-      },
-      {
-        word: 'JavaScript',
-        size: 'small'
-      },
-      {
-        word: 'Node',
-        size: 'large'
-      },
-      {
-        word: 'React',
-        size: 'small'
-      },
-      {
-        word: 'Vue',
-        size: 'medium'
-      },
-      {
-        word: 'Angular',
-        size: 'large'
-      },
-      {
-        word: 'Firebase',
-        size: 'medium'
+    firestore.collection("words").onSnapshot(snapshot => {
+      let wordCanvas = document.querySelector(".words");
+      let wordsHTML = "";
+
+      if (snapshot.docs.length === 0) {
+        return (wordCanvas.innerHTML =
+          "<span>No words have been added yet!</span>");
       }
-    ]
-    let wordCanvas = document.querySelector('.words')
-    let wordsHTML = ''
 
-    if (snapshot.docs.length === 0) {
-      return wordCanvas.innerHTML = '<span>No words have been added yet!</span>'
-    }
-
-    snapshot.docs.forEach(doc => {
-      const { word, size } = doc.data()
-      const wordHTML = `<span class="word ${size}">${word}</span>`
-      wordsHTML += wordHTML
-    })
-    wordCanvas.innerHTML = wordsHTML
+      snapshot.docs.forEach(doc => {
+        const { word, size } = doc.data();
+        const wordHTML = `<span id=${doc.id} class="word ${size}">${word}</span>`;
+        wordsHTML += wordHTML;
+      });
+      wordCanvas.innerHTML = wordsHTML;
 
       // change word size on single click
-      const addedWords = document.querySelectorAll('span.word')
-      
+      const addedWords = document.querySelectorAll("span.word");
+
       addedWords.forEach(word => {
-        word.addEventListener('click', (w) => {
-          console.log('change size of word')
-        })
-      })
+        word.addEventListener("click", w => {
+          const id = w.target.id
+          const currentSize = getCurrentSize(w.target.classList)
+          const nextSize = getNextSize(currentSize)
+          
+          firestore.collection('words').doc(id).update({ size: nextSize })
+        });
+      });
 
       // delete word on dbl click
       addedWords.forEach(word => {
-        word.addEventListener('dblclick', () => {
-          console.log('delete this word')
-        })
-      })
-    })
-
-    // submit form handler
-    const addWordForm = document.querySelector('#add-word-form')
-    addWordForm.addEventListener('submit', (e) => console.log('add new word'))
+        word.addEventListener("dblclick", () => {
+          // console.log("delete this word");
+        });
+      });
+    });
   },
   methods: {
-    addWord: () => {
-      const wordInput = document.querySelector('.addWord')
-      wordInput.classList.remove('none')
+    showAddWordForm: () => {
+      const wordInput = document.querySelector("#add-word-form");
+      const controls = document.querySelector('.controls')
+      const addWordInput = document.getElementById('addWordInput')
+      wordInput.classList.remove("none");
+      addWordInput.focus()
+      controls.classList.add('none')
+
     },
-    cancelAddWord: () => {
-      const wordInput = document.querySelector('.addWord')
-      const addWordInput = document.querySelector('#addWordInput')
-      wordInput.classList.add('none')
-      addWordInput.value = ''
+    hideAddWordForm: () => {
+      const wordInput = document.querySelector("#add-word-form");
+      const addWordInput = document.querySelector("#addWordInput");
+      const controls = document.querySelector('.controls')
+      wordInput.classList.add("none");
+      addWordInput.value = "";
+      controls.classList.remove('none')
     },
-    addWordToList: () => {
-      const addWordForm = document.querySelector('#add-word-form')
-      const addWordInput = document.querySelector('#addWordInput')
-      const newWord = addWordInput.value
+    addNewWord: () => {
+      const addWordForm = document.querySelector("#add-word-form");
+      const addWordInput = document.querySelector("#addWordInput");
+      const newWord = addWordInput.value;
 
       // clear input fields and hide form
-      addWordForm.classList.add('none')
-      addWordInput.value = ''
+      addWordForm.classList.add("none");
+      addWordInput.value = "";
 
-      firestore.collection('words').add({
+      firestore.collection("words").add({
         word: newWord,
-        size: 'medium'
+        size: "medium"
+      });
+    },
+    clearAllWords: () => {
+      firestore.collection('words').get().then(snaphot => {
+        snaphot.docs.forEach(doc => {
+          firestore.collection('words').doc(doc.id).delete()
+        })
       })
-      
     }
   }
-}
+};
 </script>
 
 <style>
 @font-face {
-  font-family: 'ps';
-  font-style: 'normal';
+  font-family: "ps";
+  font-style: "normal";
   font-weight: 300;
-  src: url('./assets/fonts/ps_regular.ttf')
+  src: url("./assets/fonts/ps_regular.ttf");
 }
 
 @font-face {
-  font-family: 'ps-bold';
-  font-style: 'bold';
+  font-family: "ps-bold";
+  font-style: "bold";
   font-weight: 700;
-  src: url('./assets/fonts/ps_bold.ttf')
+  src: url("./assets/fonts/ps_bold.ttf");
 }
 
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
 }
 
 #app {
-  font-family: 'ps', 'Avenir', Helvetica, Arial, sans-serif;
+  font-family: "ps", "Avenir", Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
@@ -171,7 +153,7 @@ button {
   color: white;
   border-radius: 0.3em;
   border: none;
-  font-family: 'ps', 'Avenir', Helvetica, Arial, sans-serif;  
+  font-family: "ps", "Avenir", Helvetica, Arial, sans-serif;
   font-size: 1em;
   cursor: pointer;
 }
@@ -189,8 +171,13 @@ header {
   display: flex;
   justify-content: space-between;
   box-shadow: #f2f2f2 5px 5px 5px;
-  padding: 1em;
+  padding: 0 1em;
   background-color: lightgoldenrodyellow;
+}
+
+header h3 {
+  cursor: default;
+  font-weight: normal;
 }
 
 .right.nav {
@@ -201,27 +188,39 @@ header {
 
 .right.nav .links {
   list-style-type: none;
-  padding: 1em;
+  padding: 0 0.5em;
+  cursor: pointer;
 }
 
 section {
   padding: 1em;
 }
 
+section .words {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
 /* styles for words */
 .words > span {
-  padding: 1em;
+  padding: 0 0.5em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
 }
 
 .words > span.small {
-  font-size: 1em
+  font-size: 1em;
 }
 
 .words > span.medium {
-  font-size: 1.5em
+  font-size: 1.5em;
 }
 
 .words > span.large {
-  font-size: 2em
+  font-size: 2em;
+  font-weight: bold;
 }
 </style>
