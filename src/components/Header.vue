@@ -4,14 +4,14 @@
       <h3>Word Wrap</h3>
     </div>
     <div class="right nav">
-      <li v-if="!isUserLoggedIn" class="links">
-        <router-link to='/login' exact>
-          <button>Login</button>
-        </router-link>
-      </li>
       <li class="links">
         <router-link to='/' exact>
           <button>Home</button>
+        </router-link>
+      </li>
+      <li v-if="!isUserLoggedIn" class="links">
+        <router-link to='/login' exact>
+          <button>Login</button>
         </router-link>
       </li>
       <li v-if="isUserLoggedIn" class="links">
@@ -35,12 +35,11 @@ export default {
     signOutUser: function() {
       const auth = firebase.auth()
       auth.signOut().then(() => {
-        this.redirectToLoginAfterSignOut()
+        this.updateLoggedInStatus()
       })
     },
-    redirectToLoginAfterSignOut() {
+    updateLoggedInStatus() {
       this.$store.commit('toggleSignInMode')
-      this.$router.push('/login')
     }
   }
 }
@@ -51,7 +50,7 @@ export default {
     display: flex;
     justify-content: space-between;
     box-shadow: #f2f2f2 5px 5px 5px;
-    background-color: lightgoldenrodyellow;
+    background-color: gold;
   }
 
   header h3 {

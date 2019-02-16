@@ -36,6 +36,7 @@ export default {
   },
   mounted: function() {
     const auth = firebase.auth()
+    const firestore = firebase.firestore()
 
     const loginForm = document.getElementById('loginForm')
     loginForm.addEventListener('submit', (e) => {
@@ -43,8 +44,14 @@ export default {
 
       const email = loginForm.email.value
       const password = loginForm.password.value
-      auth.signInWithEmailAndPassword(email, password).then(data => {
-        
+      auth.signInWithEmailAndPassword(email, password).then(user => {
+        console.log(user.additionalUserInfo.isNewUser)
+        if (user.additionalUserInfo.isNewUser) {
+          // setup default list in firestore with userId
+          firestore.collection('user').doc('default').add().then(data => {
+            console.log(data)
+          })
+        }
         // redirect to workspace
         this.redirectToWordsCanvas()
       }, (err) => {
@@ -58,8 +65,8 @@ export default {
 
       const email = signUpForm.email.value
       const password = signUpForm.password.value
-      auth.createUserWithEmailAndPassword(email, password).then(data => {
-        
+      auth.createUserWithEmailAndPassword(email, password).then(user => {
+        firestore.collection(`users/${user.user.uid}/default`).add({ word: 'Sample', size: 'medium'})
         // redirect to workspace        
         this.redirectToWordsCanvas()
       }, (err) => {
