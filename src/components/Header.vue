@@ -35,12 +35,11 @@ export default {
     signOutUser: function() {
       const auth = firebase.auth()
       auth.signOut().then(() => {
-        this.redirectToLoginAfterSignOut()
+        this.updateLoggedInStatus()
       })
     },
-    redirectToLoginAfterSignOut() {
+    updateLoggedInStatus() {
       this.$store.commit('toggleSignInMode')
-      this.$router.push('/login')
     }
   }
 }

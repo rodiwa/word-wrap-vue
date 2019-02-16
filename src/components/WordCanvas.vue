@@ -34,98 +34,91 @@ export default {
     // get data from firestore and setup initial view
     const firestore = firebase.firestore()
     const auth = firebase.auth()
-    // TODO this code is causing issue in loggedInUser status.
-    auth.onAuthStateChanged((user) => {
-      console.log(user)
-      if (user) {
-        store.commit('toggleSignInMode', true)
-      } // } else { // TODO fix this // show lot logged in mesg when user is logged out and on canvas
-      //   console.log(self)
-      //   self.showNotLoggedInMessage()
-      // }
-    })
 
     // this will be reference to array of words (data) received from firestore
     let docs = []
 
-    console.log(auth.currentUser)
+    // TODO this code is causing issue in loggedInUser status.
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        // TODO fix duplication of code
+        firestore.collection(`users/${auth.currentUser.uid}/default`).onSnapshot(snapshot => {
+          docs = snapshot.docs
 
-    if (auth.currentUser) {
-      // TODO fix duplication of code
-      firestore.collection(`users/${auth.currentUser.uid}/default`).onSnapshot(snapshot => {
-        docs = snapshot.docs
+          let wordCanvas = document.querySelector(".words");
+          let wordsHTML = "";
+    
+          if (docs.length === 0) {
+            return (wordCanvas.innerHTML =
+              "<span>No words have been added yet!</span>");
+          }
+    
+          docs.forEach(doc => {
+            const { word, size } = doc.data();
+            const wordHTML = `<span id=${doc.id} class="word ${size}">${word}</span>`;
+            wordsHTML += wordHTML;
+          });
+          wordCanvas.innerHTML = wordsHTML;
 
-        let wordCanvas = document.querySelector(".words");
-        let wordsHTML = "";
-  
-        if (docs.length === 0) {
-          return (wordCanvas.innerHTML =
-            "<span>No words have been added yet!</span>");
-        }
-  
-        docs.forEach(doc => {
-          const { word, size } = doc.data();
-          const wordHTML = `<span id=${doc.id} class="word ${size}">${word}</span>`;
-          wordsHTML += wordHTML;
-        });
-        wordCanvas.innerHTML = wordsHTML;
+          // change word size on single click
+          const addedWords = document.querySelectorAll("span.word");
+          addedWords.forEach(word => {
+            word.addEventListener("click", function(w) {
+              const id = w.target.id
+              if (store.state.isRemoveModeEnabled) {
+                // remove words from firebase
+                firestore.collection(`users/${auth.currentUser.uid}/default`).doc(id).delete()
+              } else {
+                // change size of words only
+                const currentSize = getCurrentSize(w.target.classList)
+                const nextSize = getNextSize(currentSize)
+                firestore.collection(`users/${auth.currentUser.uid}/default`).doc(id).update({ size: nextSize })
+              }
+            });
+          });
+        })
+        store.commit('toggleSignInMode', true)
+      } else {// } else { // TODO fix this // show lot logged in mesg when user is logged out and on canvas
+      //   console.log(self)
+      //   self.showNotLoggedInMessage()
+      // }
+          firestore.collection("words").onSnapshot(snapshot => {
+          docs = snapshot.docs
 
-        // change word size on single click
-        const addedWords = document.querySelectorAll("span.word");
-        addedWords.forEach(word => {
-          word.addEventListener("click", function(w) {
-            const id = w.target.id
-            if (store.state.isRemoveModeEnabled) {
-              // remove words from firebase
-              firestore.collection(`users/${auth.currentUser.uid}/default`).doc(id).delete()
-            } else {
-              // change size of words only
-              const currentSize = getCurrentSize(w.target.classList)
-              const nextSize = getNextSize(currentSize)
-              firestore.collection(`users/${auth.currentUser.uid}/default`).doc(id).update({ size: nextSize })
-            }
+          let wordCanvas = document.querySelector(".words");
+          let wordsHTML = "";
+
+          if (docs.length === 0) {
+            return (wordCanvas.innerHTML =
+              "<span>No words have been added yet!</span>");
+          }
+    
+          docs.forEach(doc => {
+            const { word, size } = doc.data();
+            const wordHTML = `<span id=${doc.id} class="word ${size}">${word}</span>`;
+            wordsHTML += wordHTML;
+          });
+          wordCanvas.innerHTML = wordsHTML;
+    
+          // change word size on single click
+          const addedWords = document.querySelectorAll("span.word");
+          addedWords.forEach(word => {
+            word.addEventListener("click", function(w) {
+              const id = w.target.id
+              if (store.state.isRemoveModeEnabled) {
+                // remove words from firebase
+                firestore.collection('words').doc(id).delete()
+              } else {
+                // change size of words only
+                const currentSize = getCurrentSize(w.target.classList)
+                const nextSize = getNextSize(currentSize)
+                firestore.collection('words').doc(id).update({ size: nextSize })
+              }
+            });
           });
         });
-      })
-    } else {
-      firestore.collection("words").onSnapshot(snapshot => {
-        docs = snapshot.docs
-
-        let wordCanvas = document.querySelector(".words");
-        let wordsHTML = "";
-
-        if (docs.length === 0) {
-          return (wordCanvas.innerHTML =
-            "<span>No words have been added yet!</span>");
-        }
-  
-        docs.forEach(doc => {
-          const { word, size } = doc.data();
-          const wordHTML = `<span id=${doc.id} class="word ${size}">${word}</span>`;
-          wordsHTML += wordHTML;
-        });
-        wordCanvas.innerHTML = wordsHTML;
-  
-        // change word size on single click
-        const addedWords = document.querySelectorAll("span.word");
-        addedWords.forEach(word => {
-          word.addEventListener("click", function(w) {
-            const id = w.target.id
-            if (store.state.isRemoveModeEnabled) {
-              // remove words from firebase
-              firestore.collection('words').doc(id).delete()
-            } else {
-              // change size of words only
-              const currentSize = getCurrentSize(w.target.classList)
-              const nextSize = getNextSize(currentSize)
-              firestore.collection('words').doc(id).update({ size: nextSize })
-            }
-          });
-        });
-      });
-    }
-
-    // show this only when user is not logged in
+      }
+    })
   },
   methods: {
     showNotLoggedInMessage: function() {
@@ -157,13 +150,12 @@ export default {
       const controls = document.querySelector('.controls')
       const addWordButton = document.getElementById('addWord')
       const newWord = addWordInput.value;
+      
       // clear input fields and hide form
       addWordForm.classList.add("none");
       addWordInput.value = "";
       controls.classList.remove('none')
       addWordButton.focus()
-
-      console.log(auth.currentUser)
 
       if (auth.currentUser) {
         // if logged in, save to default
