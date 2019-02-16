@@ -13,7 +13,10 @@ export const store = new Vuex.Store({
     toggleRemoveWordMode: (state) => {
       state.isRemoveModeEnabled = !state.isRemoveModeEnabled
     },
-    toggleSignInMode: (state) => {
+    toggleSignInMode: (state, isLoggedIn) => {
+      if (isLoggedIn) {
+        return state.isUserLoggedIn = true
+      }
       state.isUserLoggedIn = !state.isUserLoggedIn
     }
   }
