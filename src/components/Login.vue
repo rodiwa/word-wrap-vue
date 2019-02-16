@@ -48,7 +48,7 @@ export default {
         // redirect to workspace
         this.redirectToWordsCanvas()
       }, (err) => {
-        this.showErrorMessage(err.message)
+        this.showLoginErrorMessage(err.message)
       })      
     })
 
@@ -63,7 +63,7 @@ export default {
         // redirect to workspace        
         this.redirectToWordsCanvas()
       }, (err) => {
-        this.showErrorMessage(err.message)
+        this.showSignInNewUserErrorMessage(err.message)
       })
     })
 
@@ -75,12 +75,12 @@ export default {
     })
   },
   methods: {
-    showErrorMessage: function(message) {
+    showLoginErrorMessage: function(message) {
       const loginUserError = this.$refs.loginUserError
       loginUserError.classList.remove('none')
       loginUserError.textContent = message
     },
-    showSignInNewUserError: function() {
+    showSignInNewUserErrorMessage: function(message) {
       const signNewUserError = this.$refs.signNewUserError
       signNewUserError.classList.remove('none')
       signNewUserError.textContent = message
