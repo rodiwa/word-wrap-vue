@@ -47,7 +47,6 @@ export default {
 
       // change word size on single click
       const addedWords = document.querySelectorAll("span.word");
-      // const store = new Vuex.Store()
 
       addedWords.forEach(word => {
         word.addEventListener("click", function(w) {
@@ -61,13 +60,6 @@ export default {
             const nextSize = getNextSize(currentSize)
             firestore.collection('words').doc(id).update({ size: nextSize })
           }
-        });
-      });
-
-      // delete word on dbl click
-      addedWords.forEach(word => {
-        word.addEventListener("dblclick", () => {
-          // console.log("delete this word");
         });
       });
     });
@@ -92,6 +84,7 @@ export default {
       addWordButton.focus()
     },
     addNewWord: () => {
+      const firestore = firebase.firestore()
       const addWordForm = document.querySelector("#add-word-form");
       const addWordInput = document.querySelector("#addWordInput");
       const controls = document.querySelector('.controls')
@@ -109,6 +102,7 @@ export default {
       });
     },
     clearAllWords: () => {
+      const firestore = firebase.firestore()
       firestore.collection('words').get().then(snaphot => {
         snaphot.docs.forEach(doc => {
           firestore.collection('words').doc(doc.id).delete()
@@ -123,6 +117,10 @@ export default {
 </script>
 
 <style>
+form#add-word-form {
+  display: block;
+}
+
 button#removeWordsDisable {
   background-color: green;
 }

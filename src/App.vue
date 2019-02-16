@@ -55,7 +55,7 @@ export default {
   }
 
   .none {
-    display: none;
+    display: none !important;
   }
 
   button {
