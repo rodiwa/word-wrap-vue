@@ -15,7 +15,7 @@
 </template>
 
 <script>
-import firestore from "../firebase/init";
+import firebase from "../firebase/init";
 import { getCurrentSize, getNextSize } from '../utils'
 import { store } from '../store'
 import Header from './Header.vue'
@@ -28,6 +28,7 @@ export default {
   },
   mounted: () => {
     // get data from firestore and setup initial view
+    const firestore = firebase.firestore()
     firestore.collection("words").onSnapshot(snapshot => {
       let wordCanvas = document.querySelector(".words");
       let wordsHTML = "";

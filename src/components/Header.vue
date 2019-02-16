@@ -15,9 +15,7 @@
         </router-link>
       </li>
       <li v-if="isUserLoggedIn" class="links">
-        <router-link>
-          <button>Sign Out</button>
-        </router-link>
+          <button @click="signOutUser">Sign Out</button>
       </li>
     </div>
   </header>
@@ -25,12 +23,25 @@
 
 <script>
 import { store } from '../store'
+import firebase from '../firebase/init'
 
 export default {
   name: 'app-header',
   computed: {
     isUserLoggedIn: (context) =>
       context.$store.state.isUserLoggedIn
+  },
+  methods: {
+    signOutUser: function() {
+      const auth = firebase.auth()
+      auth.signOut().then(() => {
+        this.redirectToLoginAfterSignOut()
+      })
+    },
+    redirectToLoginAfterSignOut() {
+      this.$store.commit('toggleSignInMode')
+      this.$router.push('/login')
+    }
   }
 }
 </script>

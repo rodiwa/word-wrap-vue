@@ -12,6 +12,9 @@ export const store = new Vuex.Store({
   mutations: {
     toggleRemoveWordMode: (state) => {
       state.isRemoveModeEnabled = !state.isRemoveModeEnabled
+    },
+    toggleSignInMode: (state) => {
+      state.isUserLoggedIn = !state.isUserLoggedIn
     }
   }
 })
