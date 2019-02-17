@@ -1,6 +1,6 @@
 <template>
   <section id="wordCanvas">
-    <div v-if="!isUserLoggedIn" ref="noLoginMessage" id="no-login-message" class="none"><span>Your chart will be reset once you leave this page! Login to save and use more features!</span></div>
+    <div v-if="!isUserLoggedIn" id="no-login-message"><span>Your chart will be reset once you leave this page! <b>Login</b> to save and use more features!</span></div>
     <div class="words" v-bind:class="{remove: isRemoveWordEnabled}"></div>
     <form id="add-word-form" @submit.prevent="addNewWord" class="addWord none">
       <input type="text" id="addWordInput" autocomplete="off" placeholder="Add Word">
@@ -77,11 +77,8 @@ export default {
             });
           });
         })
-        store.commit('toggleSignInMode', true)
-      } else {// } else { // TODO fix this // show lot logged in mesg when user is logged out and on canvas
-      //   console.log(self)
-      //   self.showNotLoggedInMessage()
-      // }
+        store.commit('enableSignInMode')
+      } else {
           firestore.collection("words").onSnapshot(snapshot => {
           docs = snapshot.docs
 
@@ -117,13 +114,11 @@ export default {
             });
           });
         });
+        store.commit('clearSignInMode')
       }
     })
   },
   methods: {
-    showNotLoggedInMessage: function() {
-      this.$refs.noLoginMessage.classList.remove('none')
-    },
     showAddWordForm: () => {
       const wordInput = document.querySelector("#add-word-form");
       const controls = document.querySelector('.controls')

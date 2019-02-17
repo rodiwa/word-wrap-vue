@@ -45,7 +45,6 @@ export default {
       const email = loginForm.email.value
       const password = loginForm.password.value
       auth.signInWithEmailAndPassword(email, password).then(user => {
-        console.log(user.additionalUserInfo.isNewUser)
         if (user.additionalUserInfo.isNewUser) {
           // setup default list in firestore with userId
           firestore.collection('user').doc('default').add().then(data => {

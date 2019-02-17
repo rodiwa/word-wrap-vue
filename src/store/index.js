@@ -18,6 +18,12 @@ export const store = new Vuex.Store({
         return state.isUserLoggedIn = true
       }
       state.isUserLoggedIn = !state.isUserLoggedIn
+    },
+    clearSignInMode: (state) => {
+      state.isUserLoggedIn = false
+    },
+    enableSignInMode: (state) => {
+      state.isUserLoggedIn = true
     }
   }
 })
