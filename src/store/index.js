@@ -7,7 +7,8 @@ export const store = new Vuex.Store({
   strict: true,
   state: {
     isRemoveModeEnabled: false,
-    isUserLoggedIn: false
+    isUserLoggedIn: false,
+    activeListId: ''
   },
   mutations: {
     toggleRemoveWordMode: (state) => {
@@ -24,6 +25,9 @@ export const store = new Vuex.Store({
     },
     enableSignInMode: (state) => {
       state.isUserLoggedIn = true
+    },
+    setActiveListId: (state, id) => {
+      state.activeListId = id
     }
   }
 })

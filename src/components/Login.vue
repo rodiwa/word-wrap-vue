@@ -65,7 +65,12 @@ export default {
       const email = signUpForm.email.value
       const password = signUpForm.password.value
       auth.createUserWithEmailAndPassword(email, password).then(user => {
-        firestore.collection(`users/${user.user.uid}/default`).add({ word: 'Sample', size: 'medium'})
+        // firestore.collection(`users/${user.user.uid}/default`).add({ word: 'Sample', size: 'medium'})
+        firestore.collection(`users/${user.user.uid}/lists`).add({ words: [], name: 'default' }).then(docRef => {
+          firestore.collection(`users/${user.user.uid}/meta`).add({ isActiveList: docRef.id }).then(() => {
+            console.log('Added lists, meta and active list id')
+          })
+        })
         // redirect to workspace        
         this.redirectToWordsCanvas()
       }, (err) => {

@@ -7,10 +7,11 @@
       <button type="reset" id="cancel" @click="hideAddWordForm">Cancel</button>
     </form>
     <div class="controls">
-      <button id="addWord" @click="showAddWordForm">Add</button>
-      <button id="clearWords" @click="clearAllWords">Clear All</button>
-      <button v-if="!isRemoveWordEnabled" id="removeWordsEnable" @click="removeWordsToggle">Remove Words</button>
-      <button v-if="isRemoveWordEnabled" id="removeWordsDisable" @click="removeWordsToggle">Done Removing Words</button>
+      <button :disabled="!isUserLoggedIn" id="addWord" @click="showAddWordForm">Add</button>
+      <button :disabled="!isUserLoggedIn" id="clearWords" @click="clearAllWords">Clear All</button>
+      <button :disabled="!isUserLoggedIn" v-if="!isRemoveWordEnabled" id="removeWordsEnable" @click="removeWordsToggle">Remove Words</button>
+      <button :disabled="!isUserLoggedIn" v-if="isRemoveWordEnabled" id="removeWordsDisable" @click="removeWordsToggle">Done Removing Words</button>
+      <button :disabled="!isUserLoggedIn" v-if="isUserLoggedIn" id="saveToList" @click="saveToList">Save To List</button>
     </div>
   </section>
 </template>
@@ -20,6 +21,22 @@ import firebase from "../firebase/init";
 import { getCurrentSize, getNextSize } from '../utils'
 import { store } from '../store'
 import Header from './Header.vue'
+
+const getActiveListId = async ({ firestore, auth }) => {
+  if (store.state.activeListId && store.state.activeListId !== '') {
+    return store.state.activeListId
+  }
+
+  let activeListId = ''
+  // TODO move this fn to separate util
+  await firestore.collection(`users/${auth.currentUser.uid}/meta`).get().then(snapshot => {
+    snapshot.docs.forEach(doc => {
+      activeListId = doc.data().isActiveList
+      store.commit('setActiveListId', activeListId)
+    })
+  })
+  return activeListId
+}
 
 export default {
   name: "word-canvas",
@@ -37,25 +54,29 @@ export default {
 
     // this will be reference to array of words (data) received from firestore
     let docs = []
+    let activeListId = ''
 
     // TODO this code is causing issue in loggedInUser status.
-    auth.onAuthStateChanged((user) => {
+    auth.onAuthStateChanged(async (user) => {
       if (user) {
+        const activeListId = await getActiveListId({ firestore, auth })
+
         // TODO fix duplication of code
-        firestore.collection(`users/${auth.currentUser.uid}/default`).onSnapshot(snapshot => {
-          docs = snapshot.docs
+        firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(activeListId).collection('words').onSnapshot(snapshot => {
+          let words = snapshot.docs
 
           let wordCanvas = document.querySelector(".words");
           let wordsHTML = "";
     
-          if (docs.length === 0) {
+          if (snapshot.docs.length === 0) {
             return (wordCanvas.innerHTML =
               "<span>No words have been added yet!</span>");
           }
     
-          docs.forEach(doc => {
-            const { word, size } = doc.data();
-            const wordHTML = `<span id=${doc.id} class="word ${size}">${word}</span>`;
+          snapshot.docs.forEach(wordItem => {
+            const { word, size } = wordItem.data()
+            const id = wordItem.id
+            const wordHTML = `<span id=${id} class="word ${size}">${word}</span>`;
             wordsHTML += wordHTML;
           });
           wordCanvas.innerHTML = wordsHTML;
@@ -67,12 +88,12 @@ export default {
               const id = w.target.id
               if (store.state.isRemoveModeEnabled) {
                 // remove words from firebase
-                firestore.collection(`users/${auth.currentUser.uid}/default`).doc(id).delete()
+                firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(activeListId).collection('words').doc(id).delete()
               } else {
                 // change size of words only
                 const currentSize = getCurrentSize(w.target.classList)
                 const nextSize = getNextSize(currentSize)
-                firestore.collection(`users/${auth.currentUser.uid}/default`).doc(id).update({ size: nextSize })
+                firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(activeListId).collection('words').doc(id).update({ size: nextSize })
               }
             });
           });
@@ -137,7 +158,7 @@ export default {
       controls.classList.remove('none')
       addWordButton.focus()
     },
-    addNewWord: () => {
+    addNewWord: async () => {
       const firestore = firebase.firestore()
       const auth= firebase.auth()
       const addWordForm = document.querySelector("#add-word-form");
@@ -153,8 +174,11 @@ export default {
       addWordButton.focus()
 
       if (auth.currentUser) {
+        const activeListId = await getActiveListId({ firestore, auth })
+
         // if logged in, save to default
-        firestore.collection(`users/${auth.currentUser.uid}/default`).add({ word: newWord, size: 'medium' })
+        // firestore.collection(`users/${auth.currentUser.uid}/default`).add({ word: newWord, size: 'medium' })
+        firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(activeListId).collection('words').add({ word: newWord, size: 'medium' })
       } else {
         // if user is not logged in, add to temporary store
         // TODO temp store will be deprecated. will save locally only and reset when user leaves page if user is not logged in
@@ -165,22 +189,40 @@ export default {
       }
 
     },
-    clearAllWords: () => {
+    clearAllWords: async () => {
       const firestore = firebase.firestore()
-      firestore.collection('words').get().then(snaphot => {
-        snaphot.docs.forEach(doc => {
-          firestore.collection('words').doc(doc.id).delete()
+      const auth = firebase.auth()
+      if (auth.currentUser) {
+        const activeListId = await getActiveListId({ firestore, auth })
+
+        firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(activeListId).collection('words').get().then(snaphot => {
+          snaphot.docs.forEach(doc => {
+            firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(activeListId).collection('words').doc(doc.id).delete()
+          })
         })
-      })
+      } else {
+        // TODO handle clear for anonymous users
+      }
+      
     },
     removeWordsToggle: function () {
       this.$store.commit('toggleRemoveWordMode')
+    },
+    saveToList: () => {
+      console.log('saveToList')
+      // if no list name found, then prompt for one [modal]
+        // else, use list name (docId) and proceed to save
+      // use set to update entire list to collection; set will override existing
     }
   }
 };
 </script>
 
 <style>
+.router-link-exact-active.router-link-active {
+  display: none;
+}
+
 form#add-word-form {
   display: block;
 }
@@ -191,6 +233,11 @@ button#removeWordsDisable {
 
 button#removeWordsEnable {
   background-color: red;
+}
+
+button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
 input {
