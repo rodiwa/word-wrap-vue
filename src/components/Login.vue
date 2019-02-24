@@ -25,6 +25,7 @@
 
 <script>
 import firebase from '../firebase/init'
+import { store } from '../store';
 
 export default {
   name: 'login',
@@ -45,12 +46,6 @@ export default {
       const email = loginForm.email.value
       const password = loginForm.password.value
       auth.signInWithEmailAndPassword(email, password).then(user => {
-        if (user.additionalUserInfo.isNewUser) {
-          // setup default list in firestore with userId
-          firestore.collection('user').doc('default').add().then(data => {
-            console.log(data)
-          })
-        }
         // redirect to workspace
         this.redirectToWordsCanvas()
       }, (err) => {
@@ -66,13 +61,19 @@ export default {
       const password = signUpForm.password.value
       auth.createUserWithEmailAndPassword(email, password).then(user => {
         // firestore.collection(`users/${user.user.uid}/default`).add({ word: 'Sample', size: 'medium'})
-        firestore.collection(`users/${user.user.uid}/lists`).add({ words: [], name: 'default' }).then(docRef => {
-          firestore.collection(`users/${user.user.uid}/meta`).add({ isActiveList: docRef.id }).then(() => {
+        firestore.collection(`users/${user.user.uid}/lists`).add({ name: 'default' }).then(docRef => {
+          firestore.collection(`users/${user.user.uid}/meta`).add({ isActiveList: docRef.id, isUsingDefaultList: true, defaultListId: docRef.id }).then((doc) => {
+            store.commit('setActiveListId', docRef.id)
+            store.commit('setDefaultListId', docRef.id)
+            store.commit('setIsDefaultList', true) // TODO this is probably redundant
+            store.commit('setCurrentMetaId', doc.id)
+
             console.log('Added lists, meta and active list id')
+        
+            // redirect to workspace        
+            this.redirectToWordsCanvas()
           })
         })
-        // redirect to workspace        
-        this.redirectToWordsCanvas()
       }, (err) => {
         this.showSignInNewUserErrorMessage(err.message)
       })

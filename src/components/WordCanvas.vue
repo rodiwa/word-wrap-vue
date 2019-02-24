@@ -15,7 +15,7 @@
       <button :disabled="!isUserLoggedIn" id="clearWords" @click="clearAllWords">Clear All</button>
       <button :disabled="!isUserLoggedIn" v-if="!isRemoveWordEnabled" id="removeWordsEnable" @click="removeWordsToggle">Remove Words</button>
       <button :disabled="!isUserLoggedIn" v-if="isRemoveWordEnabled" id="removeWordsDisable" @click="removeWordsToggle">Done Removing Words</button>
-      <button :disabled="!isUserLoggedIn" v-if="isUserLoggedIn" id="saveToList" @click="showSaveToListForm">Save To List</button>
+      <button :disabled="!isUserLoggedIn" v-if="isUserLoggedIn && isDefaultList" id="saveToList" @click="showSaveToListForm">Save To List</button>
     </div>
   </section>
 </template>
@@ -36,7 +36,9 @@ const getActiveListId = async ({ firestore, auth }) => {
   await firestore.collection(`users/${auth.currentUser.uid}/meta`).get().then(snapshot => {
     snapshot.docs.forEach(doc => {
       activeListId = doc.data().isActiveList
+      let isUsingDefaultList = doc.data().isUsingDefaultList
       store.commit('setActiveListId', activeListId)
+      store.commit('setIsDefaultList', isUsingDefaultList)
       store.commit('setCurrentMetaId', doc.id)
     })
   })
@@ -49,7 +51,9 @@ export default {
     isRemoveWordEnabled: (context) =>
       context.$store.state.isRemoveModeEnabled,
     isUserLoggedIn: (context) =>
-      context.$store.state.isUserLoggedIn
+      context.$store.state.isUserLoggedIn,
+    isDefaultList: (context) =>
+      context.$store.getters.getIsDefaultList
   },
   mounted: function() {
     const self = this
@@ -67,12 +71,13 @@ export default {
         const activeListId = await getActiveListId({ firestore, auth })
 
         // TODO fix duplication of code
+        // get words from cloudstore to show ons screen
         firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(activeListId).collection('words').onSnapshot(snapshot => {
           let words = snapshot.docs
 
           let wordCanvas = document.querySelector(".words");
           let wordsHTML = "";
-    
+
           if (snapshot.docs.length === 0) {
             return (wordCanvas.innerHTML =
               "<span>No words have been added yet!</span>");
@@ -252,24 +257,41 @@ export default {
       })
 
       // create new list with name added by user
+      console.log('create new list')
       await firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(activeListId).collection('words').get().then(async snapshot => {
         // add new list name to created list
         await firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(newListId).set({ name: listName })
 
         // save currently added words to new list
+        console.log('save words to new list')
         snapshot.docs.forEach(async doc => {
           await firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(newListId).collection('words').add(doc.data())
         })
 
         // set current active list in store, firestore/user/meta
+        console.log('update meta with new state')
         store.commit('setActiveListId', newListId)
         let metaId = store.state.currentMetaId
-        await firestore.collection(`users/${auth.currentUser.uid}/meta`).doc(metaId).set({ isActiveList: newListId })
+        await firestore.collection(`users/${auth.currentUser.uid}/meta`).doc(metaId).set({ isActiveList: newListId, isUsingDefaultList: false })
+
+        // delete words from default list
+        console.log('delete words from default list')
+        const defaultListId = store.state.defaultListId
+        await firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(defaultListId).collection('words').get().then(async snapshot => {
+          snapshot.docs.forEach(async doc => {
+            await firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(defaultListId).collection('words').doc(doc.id).delete()
+          })
+        })
+
+        // update store state
+        store.commit('setIsDefaultList', false)
+
+        // reload component with current active list
+        this.$router.go()
       })
 
       // after all is done, hide add new list form
       this.hideSaveToListForm()
-      console.log('SAVE TO LIST is done')
     },
   }
 };

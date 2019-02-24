@@ -9,7 +9,9 @@ export const store = new Vuex.Store({
     isRemoveModeEnabled: false,
     isUserLoggedIn: false,
     activeListId: '',
-    currentMetaId: ''
+    defaultListId: '',
+    currentMetaId: '',
+    isDefaultList: true,
   },
   mutations: {
     toggleRemoveWordMode: (state) => {
@@ -32,12 +34,21 @@ export const store = new Vuex.Store({
     },
     setCurrentMetaId: (state, id) => {
       state.currentMetaId = id
-    }
+    },
+    setIsDefaultList: (state, isDefaultList) => {
+      state.isDefaultList = isDefaultList
+    },
+    setDefaultListId: (state, id) =>
+      state.defaultListId = id
   },
   getters: {
     getActiveListId: state =>
       state.activeListId,
     getCurrentMetaId: state =>
-      state.currentMetaId
+      state.currentMetaId,
+    getIsDefaultList: state =>
+      state.isDefaultList,
+    getDefaultListId: state =>
+      state.defaultListId,
   }
 })
