@@ -8,7 +8,8 @@ export const store = new Vuex.Store({
   state: {
     isRemoveModeEnabled: false,
     isUserLoggedIn: false,
-    activeListId: ''
+    activeListId: '',
+    currentMetaId: ''
   },
   mutations: {
     toggleRemoveWordMode: (state) => {
@@ -28,6 +29,15 @@ export const store = new Vuex.Store({
     },
     setActiveListId: (state, id) => {
       state.activeListId = id
+    },
+    setCurrentMetaId: (state, id) => {
+      state.currentMetaId = id
     }
+  },
+  getters: {
+    getActiveListId: state =>
+      state.activeListId,
+    getCurrentMetaId: state =>
+      state.currentMetaId
   }
 })

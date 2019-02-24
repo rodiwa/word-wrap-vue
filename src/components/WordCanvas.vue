@@ -6,12 +6,16 @@
       <input type="text" id="addWordInput" autocomplete="off" placeholder="Add Word">
       <button type="reset" id="cancel" @click="hideAddWordForm">Cancel</button>
     </form>
+    <form id="add-to-list-form" @submit.prevent="saveToList" class="addToList none">
+      <input type="text" id="newListName" autocomplete="off" placeholder="Name Your List">
+      <button type="reset" id="cancel" @click="hideAddToListForm">Cancel</button>
+    </form>
     <div class="controls">
       <button :disabled="!isUserLoggedIn" id="addWord" @click="showAddWordForm">Add</button>
       <button :disabled="!isUserLoggedIn" id="clearWords" @click="clearAllWords">Clear All</button>
       <button :disabled="!isUserLoggedIn" v-if="!isRemoveWordEnabled" id="removeWordsEnable" @click="removeWordsToggle">Remove Words</button>
       <button :disabled="!isUserLoggedIn" v-if="isRemoveWordEnabled" id="removeWordsDisable" @click="removeWordsToggle">Done Removing Words</button>
-      <button :disabled="!isUserLoggedIn" v-if="isUserLoggedIn" id="saveToList" @click="saveToList">Save To List</button>
+      <button :disabled="!isUserLoggedIn" v-if="isUserLoggedIn" id="saveToList" @click="showSaveToListForm">Save To List</button>
     </div>
   </section>
 </template>
@@ -33,6 +37,7 @@ const getActiveListId = async ({ firestore, auth }) => {
     snapshot.docs.forEach(doc => {
       activeListId = doc.data().isActiveList
       store.commit('setActiveListId', activeListId)
+      store.commit('setCurrentMetaId', doc.id)
     })
   })
   return activeListId
@@ -208,12 +213,64 @@ export default {
     removeWordsToggle: function () {
       this.$store.commit('toggleRemoveWordMode')
     },
-    saveToList: () => {
-      console.log('saveToList')
-      // if no list name found, then prompt for one [modal]
-        // else, use list name (docId) and proceed to save
-      // use set to update entire list to collection; set will override existing
-    }
+    showSaveToListForm: () => {
+      const addListName = document.getElementById('add-to-list-form')
+      const controls = document.querySelector('.controls')
+      const addListNameInput = document.getElementById('newListName')
+      addListName.classList.remove('none')
+      controls.classList.add('none')
+      addListNameInput.focus()
+    },
+    hideSaveToListForm: () => {
+      const addListName = document.getElementById('add-to-list-form')
+      const controls = document.querySelector('.controls')
+      addListName.classList.add('none')
+      controls.classList.remove('none')
+    },
+    hideAddToListForm: () => {
+      const addListName = document.getElementById('add-to-list-form')
+      const controls = document.querySelector('.controls')
+      controls.classList.remove('none')
+      addListName.classList.add('none')
+    },
+    saveToList: async function() {
+      const firestore = firebase.firestore()
+      const auth = firebase.auth()
+
+      const listName = document.getElementById('newListName').value
+      if (listName.trim().length === 0) {
+        return console.error('Enter a list name')
+      }
+
+      let newListId = ''
+      const activeListId = await getActiveListId({ firestore, auth })
+      let currentlyAddedWords = []
+
+      // create new list and get its id
+      await firestore.collection(`users/${auth.currentUser.uid}/lists`).doc().get().then(snapshot => {
+        newListId = snapshot.id
+      })
+
+      // create new list with name added by user
+      await firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(activeListId).collection('words').get().then(async snapshot => {
+        // add new list name to created list
+        await firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(newListId).set({ name: listName })
+
+        // save currently added words to new list
+        snapshot.docs.forEach(async doc => {
+          await firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(newListId).collection('words').add(doc.data())
+        })
+
+        // set current active list in store, firestore/user/meta
+        store.commit('setActiveListId', newListId)
+        let metaId = store.state.currentMetaId
+        await firestore.collection(`users/${auth.currentUser.uid}/meta`).doc(metaId).set({ isActiveList: newListId })
+      })
+
+      // after all is done, hide add new list form
+      this.hideSaveToListForm()
+      console.log('SAVE TO LIST is done')
+    },
   }
 };
 </script>
@@ -223,7 +280,7 @@ export default {
   display: none;
 }
 
-form#add-word-form {
+form#add-word-form, form#add-to-list-form {
   display: block;
 }
 
