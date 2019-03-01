@@ -9,12 +9,12 @@
           <button>Home</button>
         </router-link>
       </li>
-      <li v-if="!isUserLoggedIn" class="links">
+      <li v-if="!isUserLoggedIn" class="links none">
         <router-link to='/login' exact>
           <button>Login</button>
         </router-link>
       </li>
-      <li v-if="isUserLoggedIn" class="links">
+      <li v-if="isUserLoggedIn" class="links none">
           <button @click="signOutUser">Sign Out</button>
       </li>
     </div>
@@ -30,6 +30,30 @@ export default {
   computed: {
     isUserLoggedIn: (context) =>
       context.$store.state.isUserLoggedIn
+  },
+  beforeMount: function() {
+    firebase.auth().onAuthStateChanged(user => {
+      if (user) {
+        this.$store.commit('toggleSignInMode', true)
+        
+        // remove 'none' class from all ul.links
+        const links = document.querySelectorAll('li.links')
+        links.forEach(link => link.classList.remove('none'))
+
+        this.$router.push('/lists')
+      } else {
+        this.$router.push('/')
+      }
+    })
+  },
+  mounted: function() {
+    this.$router.beforeEach((to, from, next) => {
+      console.log(store.state)
+      console.log(to)
+      console.log(from)
+      console.log(next)
+      next()
+    })
   },
   methods: {
     signOutUser: function() {

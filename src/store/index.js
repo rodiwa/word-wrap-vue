@@ -12,6 +12,7 @@ export const store = new Vuex.Store({
     defaultListId: '',
     currentMetaId: '',
     isDefaultList: true,
+    selectListName: '',
   },
   mutations: {
     toggleRemoveWordMode: (state) => {
@@ -39,7 +40,9 @@ export const store = new Vuex.Store({
       state.isDefaultList = isDefaultList
     },
     setDefaultListId: (state, id) =>
-      state.defaultListId = id
+      state.defaultListId = id,
+    setSelectedListName: (state, listName) =>
+      state.selectListName = listName
   },
   getters: {
     getActiveListId: state =>

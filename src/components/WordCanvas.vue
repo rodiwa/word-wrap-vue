@@ -1,5 +1,6 @@
 <template>
   <section id="wordCanvas">
+    <div v-if="isListNameSet">{{ this.$store.state.selectListName }}</div>
     <div v-if="!isUserLoggedIn" id="no-login-message"><span>Your chart will be reset once you leave this page! <b>Login</b> to save and use more features!</span></div>
     <div class="words" v-bind:class="{remove: isRemoveWordEnabled}"></div>
     <form id="add-word-form" @submit.prevent="addNewWord" class="addWord none">
@@ -16,6 +17,7 @@
       <button :disabled="!isUserLoggedIn" v-if="!isRemoveWordEnabled" id="removeWordsEnable" @click="removeWordsToggle">Remove Words</button>
       <button :disabled="!isUserLoggedIn" v-if="isRemoveWordEnabled" id="removeWordsDisable" @click="removeWordsToggle">Done Removing Words</button>
       <button :disabled="!isUserLoggedIn" v-if="isUserLoggedIn && isDefaultList" id="saveToList" @click="showSaveToListForm">Save To List</button>
+      <button :disabled="!isUserLoggedIn" v-if="isUserLoggedIn"><router-link to='/lists' exact>Manage Lists</router-link></button>
     </div>
   </section>
 </template>
@@ -53,13 +55,17 @@ export default {
     isUserLoggedIn: (context) =>
       context.$store.state.isUserLoggedIn,
     isDefaultList: (context) =>
-      context.$store.getters.getIsDefaultList
+      context.$store.getters.getIsDefaultList,
+    isListNameSet: (context) =>
+      context.$store.state.selectListName !== ''
   },
   mounted: function() {
     const self = this
     // get data from firestore and setup initial view
     const firestore = firebase.firestore()
     const auth = firebase.auth()
+
+    console.log(store.state.selectListName)
 
     // this will be reference to array of words (data) received from firestore
     let docs = []
@@ -78,7 +84,7 @@ export default {
           let wordCanvas = document.querySelector(".words");
           let wordsHTML = "";
 
-          if (snapshot.docs.length === 0) {
+          if (snapshot.docs.length === 0 && wordCanvas) {
             return (wordCanvas.innerHTML =
               "<span>No words have been added yet!</span>");
           }
@@ -314,6 +320,11 @@ button#removeWordsEnable {
   background-color: red;
 }
 
+button a {
+  color: #ffffff;
+  text-decoration: none;
+}
+
 button:disabled {
   opacity: 0.3;
   cursor: not-allowed;
@@ -376,5 +387,18 @@ section .words {
 
 #no-login-message {
   color: #ccc;
+}
+/* list controls */
+.list-controls {
+  background-color: lightcoral;
+  padding: 0.1em 0.5em;
+  border-radius: 5px;
+}
+.list-names button {
+  background-color: slategray;
+}
+.list-names button.active {
+  background-color: black;
+  color: #fff;
 }
 </style>

@@ -106,7 +106,7 @@ export default {
     },
     redirectToWordsCanvas: function() {
       this.$store.commit('toggleSignInMode')
-      this.$router.push('/')
+      this.$router.push('/words')
     }
   }
 }
