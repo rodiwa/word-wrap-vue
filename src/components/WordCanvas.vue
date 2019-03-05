@@ -1,6 +1,6 @@
 <template>
   <section id="wordCanvas">
-    <div v-if="isListNameSet">{{ this.$store.state.selectListName }}</div>
+    <div v-if="isUserLoggedIn">{{ this.getListName }}</div>
     <div v-if="!isUserLoggedIn" id="no-login-message"><span>Your chart will be reset once you leave this page! <b>Login</b> to save and use more features!</span></div>
     <div class="words" v-bind:class="{remove: isRemoveWordEnabled}"></div>
     <form id="add-word-form" @submit.prevent="addNewWord" class="addWord none">
@@ -27,6 +27,7 @@ import firebase from "../firebase/init";
 import { getCurrentSize, getNextSize } from '../utils'
 import { store } from '../store'
 import Header from './Header.vue'
+import { updateMetaToCloudStore, updateLatestMetaToStore } from '../firebase/db'
 
 const getActiveListId = async ({ firestore, auth }) => {
   if (store.state.activeListId && store.state.activeListId !== '') {
@@ -35,14 +36,12 @@ const getActiveListId = async ({ firestore, auth }) => {
 
   let activeListId = ''
   // TODO move this fn to separate util
-  await firestore.collection(`users/${auth.currentUser.uid}/meta`).get().then(snapshot => {
-    snapshot.docs.forEach(doc => {
-      activeListId = doc.data().isActiveList
-      let isUsingDefaultList = doc.data().isUsingDefaultList
-      store.commit('setActiveListId', activeListId)
-      store.commit('setIsDefaultList', isUsingDefaultList)
-      store.commit('setCurrentMetaId', doc.id)
-    })
+  await firestore.collection(`users/${auth.currentUser.uid}/meta`).doc('meta').get().then(snapshot => {
+    activeListId = snapshot.data().activeListId
+    let isUsingDefaultList = snapshot.data().isDefaultList
+    store.commit('setActiveListId', activeListId)
+    store.commit('setIsDefaultList', isUsingDefaultList)
+    // store.commit('setCurrentMetaId', 'meta')      
   })
   return activeListId
 }
@@ -57,15 +56,17 @@ export default {
     isDefaultList: (context) =>
       context.$store.getters.getIsDefaultList,
     isListNameSet: (context) =>
-      context.$store.state.selectListName !== ''
+      context.$store.state.selectListName !== '',
+    getListName: (context) => {
+      console.log(context.$store.state.selectListName )
+      return context.$store.state.selectListName || 'Default List'
+    },
   },
   mounted: function() {
     const self = this
     // get data from firestore and setup initial view
     const firestore = firebase.firestore()
     const auth = firebase.auth()
-
-    console.log(store.state.selectListName)
 
     // this will be reference to array of words (data) received from firestore
     let docs = []
@@ -74,11 +75,17 @@ export default {
     // TODO this code is causing issue in loggedInUser status.
     auth.onAuthStateChanged(async (user) => {
       if (user) {
+        // TODO not best here also, maybe in HEADER?
+        // console.log(user)
+        // await updateLatestMetaToStore(user.uid)
+
         const activeListId = await getActiveListId({ firestore, auth })
+        console.log('ACTIVE LIST ID')
+        console.log(activeListId)
 
         // TODO fix duplication of code
         // get words from cloudstore to show ons screen
-        firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(activeListId).collection('words').onSnapshot(snapshot => {
+        await firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(activeListId).collection('words').onSnapshot(snapshot => {
           let words = snapshot.docs
 
           let wordCanvas = document.querySelector(".words");
@@ -116,7 +123,7 @@ export default {
         })
         store.commit('enableSignInMode')
       } else {
-          firestore.collection("words").onSnapshot(snapshot => {
+          await firestore.collection("words").onSnapshot(snapshot => {
           docs = snapshot.docs
 
           let wordCanvas = document.querySelector(".words");
@@ -153,6 +160,10 @@ export default {
         });
         store.commit('clearSignInMode')
       }
+      // TODO probably not best place to update meta.
+      // this clears the already saved data, such as defaultListId, etc
+      // const { uid } = user
+      // updateMetaToCloudStore({ uid })
     })
   },
   methods: {
@@ -190,11 +201,13 @@ export default {
       addWordButton.focus()
 
       if (auth.currentUser) {
+        const { currentUser } = auth
         const activeListId = await getActiveListId({ firestore, auth })
 
         // if logged in, save to default
         // firestore.collection(`users/${auth.currentUser.uid}/default`).add({ word: newWord, size: 'medium' })
-        firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(activeListId).collection('words').add({ word: newWord, size: 'medium' })
+        await firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(activeListId).collection('words').add({ word: newWord, size: 'medium' })
+        updateMetaToCloudStore({ uid: auth.currentUser.uid })
       } else {
         // if user is not logged in, add to temporary store
         // TODO temp store will be deprecated. will save locally only and reset when user leaves page if user is not logged in
@@ -278,19 +291,24 @@ export default {
         console.log('update meta with new state')
         store.commit('setActiveListId', newListId)
         let metaId = store.state.currentMetaId
-        await firestore.collection(`users/${auth.currentUser.uid}/meta`).doc(metaId).set({ isActiveList: newListId, isUsingDefaultList: false })
+        // await firestore.collection(`users/${auth.currentUser.uid}/meta`).doc(metaId).set({ isActiveList: newListId, isUsingDefaultList: false })
 
         // delete words from default list
         console.log('delete words from default list')
         const defaultListId = store.state.defaultListId
+        console.log(defaultListId)
         await firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(defaultListId).collection('words').get().then(async snapshot => {
           snapshot.docs.forEach(async doc => {
             await firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(defaultListId).collection('words').doc(doc.id).delete()
           })
         })
 
-        // update store state
+        // update store states
         store.commit('setIsDefaultList', false)
+        store.commit('setSelectedListName', listName)
+
+        const { uid } = auth.currentUser
+        await updateMetaToCloudStore({ uid })
 
         // reload component with current active list
         this.$router.go()

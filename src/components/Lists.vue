@@ -31,7 +31,7 @@ const getActiveListId = async ({ firestore, auth }) => {
       let isUsingDefaultList = doc.data().isUsingDefaultList
       store.commit('setActiveListId', activeListId)
       store.commit('setIsDefaultList', isUsingDefaultList)
-      store.commit('setCurrentMetaId', doc.id)
+      // store.commit('setCurrentMetaId', doc.id)
     })
   })
   return activeListId
@@ -42,15 +42,12 @@ const renderListsToCanvas = (listsSnapshot) => {
   listsSnapshot.forEach(listItem => {
     const li = document.createElement('li')
     li.setAttribute('id', listItem.id)
+    li.classList.add('list-name')
     const div = document.createElement('div')
-
-    const routerLink = document.createElement('router-link')
-    routerLink.setAttribute('to', '/words')
 
     const span = document.createElement('span')
     span.textContent = listItem.name
-    div.appendChild(routerLink)
-    routerLink.appendChild(span)
+    div.appendChild(span)
     li.appendChild(div)
     ul.appendChild(li)
   })
@@ -77,18 +74,30 @@ export default {
     const firestore = firebase.firestore()
     auth.onAuthStateChanged(user => {
       if (user) {
-        firestore.collection(`users/${user.uid}/lists`).get().then(snapshot => {
-          // convert to array
-          const listResponse = snapshot.docs.map(listItem => {
-            return { ...listItem.data(), id: listItem.id }
+        firestore.collection(`users/${user.uid}/lists`).get()
+          .then(snapshot => {
+            // convert to array
+            const listResponse = snapshot.docs.map(listItem => {
+              return { ...listItem.data(), id: listItem.id }
+            })
+            // remove the 'default' list from response
+            remove(listResponse, item => item.name === 'default')
+            if (listResponse.length < 1) {
+              renderNoListsMessageToCanvas()
+            } else {
+              renderListsToCanvas(listResponse)
+            }
           })
-          // remove the 'default' list from response
-          remove(listResponse, item => item.name === 'default')
-          if (listResponse.length < 1) {
-            renderNoListsMessageToCanvas()
-          } else {
-            renderListsToCanvas(listResponse)
-          }
+        .then(() => {
+          // add event listener
+          const listNames = document.querySelectorAll('li.list-name')
+          
+          listNames.forEach(li => {
+            li.addEventListener('click', (e) => {
+              this.$store.commit('setSelectedListName', e.target.textContent)
+              this.$router.push('/words')
+            })
+          })
         })
       }
     })
@@ -151,7 +160,7 @@ export default {
         console.log('update meta with new state')
         store.commit('setActiveListId', newListId)
         let metaId = store.state.currentMetaId
-        await firestore.collection(`users/${auth.currentUser.uid}/meta`).doc(metaId).set({ isActiveList: newListId, isUsingDefaultList: false })
+        // await firestore.collection(`users/${auth.currentUser.uid}/meta`).doc(metaId).set({ isActiveList: newListId, isUsingDefaultList: false })
 
         // delete words from default list
         // console.log('delete words from default list')

@@ -1,7 +1,7 @@
 <template>
   <header id="app-header">
     <div class="left nav">
-      <h3>Word Wrap</h3>
+      <h3>{{ getHeader }}</h3>
     </div>
     <div class="right nav">
       <li class="links">
@@ -24,36 +24,43 @@
 <script>
 import { store } from '../store'
 import firebase from '../firebase/init'
+import { updateLatestMetaToStore } from '../firebase/db'
 
 export default {
   name: 'app-header',
   computed: {
     isUserLoggedIn: (context) =>
-      context.$store.state.isUserLoggedIn
+      context.$store.state.isUserLoggedIn,
+    getHeader: (context) => {
+      const currentPath = context.$router.currentRoute.path
+      switch (currentPath) {
+        case '/':
+        case '/lists':
+          return `Word Wrap`
+        case '/words':
+          return `Lists`
+      }
+    },
   },
   beforeMount: function() {
-    firebase.auth().onAuthStateChanged(user => {
+    firebase.auth().onAuthStateChanged(async (user) => {
       if (user) {
         this.$store.commit('toggleSignInMode', true)
+        const { uid } = user
+        await updateLatestMetaToStore({ uid })
         
         // remove 'none' class from all ul.links
         const links = document.querySelectorAll('li.links')
         links.forEach(link => link.classList.remove('none'))
 
-        this.$router.push('/lists')
+        // this.$router.push('/words')
       } else {
-        this.$router.push('/')
+        // this.$router.push('/')
       }
     })
   },
   mounted: function() {
-    this.$router.beforeEach((to, from, next) => {
-      console.log(store.state)
-      console.log(to)
-      console.log(from)
-      console.log(next)
-      next()
-    })
+    console.log(store.state.defaultListId)
   },
   methods: {
     signOutUser: function() {

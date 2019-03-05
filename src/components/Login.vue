@@ -25,7 +25,8 @@
 
 <script>
 import firebase from '../firebase/init'
-import { store } from '../store';
+import { store } from '../store'
+import { updateMetaToCloudStore } from '../firebase/db'
 
 export default {
   name: 'login',
@@ -46,6 +47,10 @@ export default {
       const email = loginForm.email.value
       const password = loginForm.password.value
       auth.signInWithEmailAndPassword(email, password).then(user => {
+        firestore.collection(`users/${user.uid}/meta`).doc('meta').get().then(doc => {
+          console.log(doc.data())
+        })
+        // TODO - goto workspace and show words from last used lists
         // redirect to workspace
         this.redirectToWordsCanvas()
       }, (err) => {
@@ -54,22 +59,30 @@ export default {
     })
 
     const signUpForm = document.getElementById('signUpForm')
-    signUpForm.addEventListener('submit', (e) => {
+    signUpForm.addEventListener('submit', async (e) => {
       e.preventDefault()
 
       const email = signUpForm.email.value
       const password = signUpForm.password.value
-      auth.createUserWithEmailAndPassword(email, password).then(user => {
+      let userObj = null
+      await auth.createUserWithEmailAndPassword(email, password).then(async user => {
+        userObj = user
         // firestore.collection(`users/${user.user.uid}/default`).add({ word: 'Sample', size: 'medium'})
-        firestore.collection(`users/${user.user.uid}/lists`).add({ name: 'default' }).then(docRef => {
-          firestore.collection(`users/${user.user.uid}/meta`).add({ isActiveList: docRef.id, isUsingDefaultList: true, defaultListId: docRef.id }).then((doc) => {
+        await firestore.collection(`users/${user.user.uid}/lists`).add({ name: 'default' }).then(async docRef => {
+          await firestore.collection(`users/${user.user.uid}/meta`).doc('meta').set({ isActiveList: docRef.id, isUsingDefaultList: true, defaultListId: docRef.id }).then((doc) => {
+            console.log(doc)
+            // update store with meta
             store.commit('setActiveListId', docRef.id)
             store.commit('setDefaultListId', docRef.id)
-            store.commit('setIsDefaultList', true) // TODO this is probably redundant
-            store.commit('setCurrentMetaId', doc.id)
-
-            console.log('Added lists, meta and active list id')
-        
+            store.commit('setIsDefaultList', true)
+            // store.commit('setCurrentMetaId', 'meta')
+            store.commit('setUserId', user.user.uid)
+          }).then(() => {
+              console.log(userObj.user.uid)
+              const { uid } = userObj.user
+            // update meta to cloudstore
+            updateMetaToCloudStore({ uid })
+          }).then(() => {
             // redirect to workspace        
             this.redirectToWordsCanvas()
           })
@@ -105,7 +118,6 @@ export default {
       this.$refs.signNewUserError.classList.add('none')
     },
     redirectToWordsCanvas: function() {
-      this.$store.commit('toggleSignInMode')
       this.$router.push('/words')
     }
   }
