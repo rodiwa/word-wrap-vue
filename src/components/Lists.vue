@@ -7,8 +7,8 @@
       <button type="reset" id="cancel" @click="hideAddToListForm">Cancel</button>
     </form>
     <div class="controls">
-      <button @click="showSaveToListForm">Create New List</button>
-      <button>Delete List</button>
+      <button class="icon" @click="showSaveToListForm"><fa-icon icon="folder-plus"></fa-icon></button>
+      <button class="icon none"><fa-icon icon="trash-alt"></fa-icon></button>
     </div>
   </section>
 </template>

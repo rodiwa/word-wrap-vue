@@ -6,16 +6,26 @@
     <div class="right nav">
       <li v-if="!isUserLoggedIn" class="links">
         <router-link to='/' exact>
-          <button>Home</button>
+          <button class="icon"><fa-icon icon="home"></fa-icon></button>
+        </router-link>
+      </li>
+      <li v-if="isUserLoggedIn" class="links">
+        <router-link to='/' exact>
+          <button class="icon"><router-link to='/words' exact><fa-icon icon="font"></fa-icon></router-link></button>
+        </router-link>
+      </li>
+      <li v-if="isUserLoggedIn" class="links">
+        <router-link to='/' exact>
+          <button class="icon" :disabled="!isUserLoggedIn" v-if="isUserLoggedIn"><router-link to='/lists' exact><fa-icon icon="list"></fa-icon></router-link></button>
         </router-link>
       </li>
       <li v-if="!isUserLoggedIn" class="links none">
         <router-link to='/login' exact>
-          <button>Login</button>
+          <button class="icon"><fa-icon icon="sign-in-alt"></fa-icon></button>
         </router-link>
       </li>
       <li v-if="isUserLoggedIn" class="links none">
-          <button @click="signOutUser">Sign Out</button>
+          <button class="icon" @click="signOutUser"><fa-icon icon="sign-out-alt"></fa-icon></button>
       </li>
     </div>
   </header>
