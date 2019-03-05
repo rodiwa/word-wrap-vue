@@ -59,9 +59,6 @@ export default {
       }
     })
   },
-  mounted: function() {
-    console.log(store.state.defaultListId)
-  },
   methods: {
     signOutUser: function() {
       const auth = firebase.auth()

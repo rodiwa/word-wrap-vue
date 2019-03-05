@@ -163,17 +163,7 @@ export default {
         // set current active list in store, firestore/user/meta
         console.log('update meta with new state')
         store.commit('setActiveListId', newListId)
-        // let metaId = store.state.currentMetaId
-        // await firestore.collection(`users/${auth.currentUser.uid}/meta`).doc(metaId).set({ isActiveList: newListId, isUsingDefaultList: false })
 
-        // TODO no sense to delete words from default here
-        // update cloudstore to remove all added words
-        // delete words from default list
-        // console.log('delete words from default list')
-        // const activeListId = store.state.activeListId
-        // console.log(defaultListId)
-        // console.log(store.state)
-        console.log(newListId)
         await firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(newListId).collection('words').get().then(async snapshot => {
           snapshot.docs.forEach(async doc => {
             await firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(newListId).collection('words').doc(doc.id).delete()

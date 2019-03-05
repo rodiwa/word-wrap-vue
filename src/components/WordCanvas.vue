@@ -57,10 +57,8 @@ export default {
       context.$store.getters.getIsDefaultList,
     isListNameSet: (context) =>
       context.$store.state.selectListName !== '',
-    getListName: (context) => {
-      console.log(context.$store.state.selectListName )
-      return context.$store.state.selectListName || 'Default List'
-    },
+    getListName: (context) =>
+      context.$store.state.selectListName || 'Default List',
   },
   mounted: function() {
     const self = this
@@ -75,13 +73,7 @@ export default {
     // TODO this code is causing issue in loggedInUser status.
     auth.onAuthStateChanged(async (user) => {
       if (user) {
-        // TODO not best here also, maybe in HEADER?
-        // console.log(user)
-        // await updateLatestMetaToStore(user.uid)
-
         const activeListId = await getActiveListId({ firestore, auth })
-        console.log('ACTIVE LIST ID')
-        console.log(activeListId)
 
         // TODO fix duplication of code
         // get words from cloudstore to show ons screen
@@ -290,13 +282,10 @@ export default {
         // set current active list in store, firestore/user/meta
         console.log('update meta with new state')
         store.commit('setActiveListId', newListId)
-        let metaId = store.state.currentMetaId
-        // await firestore.collection(`users/${auth.currentUser.uid}/meta`).doc(metaId).set({ isActiveList: newListId, isUsingDefaultList: false })
 
         // delete words from default list
         console.log('delete words from default list')
         const defaultListId = store.state.defaultListId
-        console.log(defaultListId)
         await firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(defaultListId).collection('words').get().then(async snapshot => {
           snapshot.docs.forEach(async doc => {
             await firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(defaultListId).collection('words').doc(doc.id).delete()

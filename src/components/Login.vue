@@ -70,7 +70,6 @@ export default {
         // firestore.collection(`users/${user.user.uid}/default`).add({ word: 'Sample', size: 'medium'})
         await firestore.collection(`users/${user.user.uid}/lists`).add({ name: 'default' }).then(async docRef => {
           await firestore.collection(`users/${user.user.uid}/meta`).doc('meta').set({ isActiveList: docRef.id, isUsingDefaultList: true, defaultListId: docRef.id }).then((doc) => {
-            console.log(doc)
             // update store with meta
             store.commit('setActiveListId', docRef.id)
             store.commit('setDefaultListId', docRef.id)
@@ -78,7 +77,6 @@ export default {
             // store.commit('setCurrentMetaId', 'meta')
             store.commit('setUserId', user.user.uid)
           }).then(() => {
-              console.log(userObj.user.uid)
               const { uid } = userObj.user
             // update meta to cloudstore
             updateMetaToCloudStore({ uid })
