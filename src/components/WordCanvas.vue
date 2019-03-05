@@ -305,7 +305,7 @@ export default {
 
         // update store states
         store.commit('setIsDefaultList', false)
-        store.commit('setSelectedListName', listName)
+        store.commit('setSelectedListName', listName.trim())
 
         const { uid } = auth.currentUser
         await updateMetaToCloudStore({ uid })

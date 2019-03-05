@@ -17,6 +17,7 @@
 import { store } from '../store'
 import firebase from '../firebase/init'
 import { remove } from 'lodash'
+import { updateMetaToCloudStore } from '../firebase/db'
 
 const getActiveListId = async ({ firestore, auth }) => {
   if (store.state.activeListId && store.state.activeListId !== '') {
@@ -93,8 +94,14 @@ export default {
           const listNames = document.querySelectorAll('li.list-name')
           
           listNames.forEach(li => {
-            li.addEventListener('click', (e) => {
+            li.addEventListener('click', async (e) => {
+              const parentLiId = e.target.closest('li').id
               this.$store.commit('setSelectedListName', e.target.textContent)
+              this.$store.commit('setActiveListId', parentLiId)
+              
+              const { uid } = user
+              await updateMetaToCloudStore({ uid })
+              
               this.$router.push('/words')
             })
           })
@@ -103,9 +110,6 @@ export default {
     })
   },
   methods: {
-    createNewList: function() {
-
-    },
     showSaveToListForm: () => {
       const addListName = document.getElementById('add-to-list-form')
       const controls = document.querySelector('.controls')
@@ -159,24 +163,30 @@ export default {
         // set current active list in store, firestore/user/meta
         console.log('update meta with new state')
         store.commit('setActiveListId', newListId)
-        let metaId = store.state.currentMetaId
+        // let metaId = store.state.currentMetaId
         // await firestore.collection(`users/${auth.currentUser.uid}/meta`).doc(metaId).set({ isActiveList: newListId, isUsingDefaultList: false })
 
+        // TODO no sense to delete words from default here
+        // update cloudstore to remove all added words
         // delete words from default list
         // console.log('delete words from default list')
-        // const defaultListId = store.state.defaultListId
+        // const activeListId = store.state.activeListId
         // console.log(defaultListId)
         // console.log(store.state)
-        // await firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(defaultListId).collection('words').get().then(async snapshot => {
-        //   snapshot.docs.forEach(async doc => {
-        //     await firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(defaultListId).collection('words').doc(doc.id).delete()
-        //   })
-        // })
+        console.log(newListId)
+        await firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(newListId).collection('words').get().then(async snapshot => {
+          snapshot.docs.forEach(async doc => {
+            await firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(newListId).collection('words').doc(doc.id).delete()
+          })
+        })
 
         // update store state
         store.commit('setIsDefaultList', false)
         // update list name to store
         store.commit('setSelectedListName', listName.trim())
+
+        const { uid } = auth.currentUser
+        await updateMetaToCloudStore({ uid })
 
         // reload component with current active list
         this.$router.push('/words')

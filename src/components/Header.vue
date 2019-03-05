@@ -4,7 +4,7 @@
       <h3>{{ getHeader }}</h3>
     </div>
     <div class="right nav">
-      <li class="links">
+      <li v-if="!isUserLoggedIn" class="links">
         <router-link to='/' exact>
           <button>Home</button>
         </router-link>
