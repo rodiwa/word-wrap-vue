@@ -1,20 +1,20 @@
 <template>
   <header id="app-header">
     <div class="left nav">
-      <h3>Word Wrap</h3>
+      <h3>{{ getHeader }}</h3>
     </div>
     <div class="right nav">
-      <li class="links">
+      <li v-if="!isUserLoggedIn" class="links">
         <router-link to='/' exact>
           <button>Home</button>
         </router-link>
       </li>
-      <li v-if="!isUserLoggedIn" class="links">
+      <li v-if="!isUserLoggedIn" class="links none">
         <router-link to='/login' exact>
           <button>Login</button>
         </router-link>
       </li>
-      <li v-if="isUserLoggedIn" class="links">
+      <li v-if="isUserLoggedIn" class="links none">
           <button @click="signOutUser">Sign Out</button>
       </li>
     </div>
@@ -24,12 +24,40 @@
 <script>
 import { store } from '../store'
 import firebase from '../firebase/init'
+import { updateLatestMetaToStore } from '../firebase/db'
 
 export default {
   name: 'app-header',
   computed: {
     isUserLoggedIn: (context) =>
-      context.$store.state.isUserLoggedIn
+      context.$store.state.isUserLoggedIn,
+    getHeader: (context) => {
+      const currentPath = context.$router.currentRoute.path
+      switch (currentPath) {
+        case '/':
+        case '/lists':
+          return `Word Wrap`
+        case '/words':
+          return `Lists`
+      }
+    },
+  },
+  beforeMount: function() {
+    firebase.auth().onAuthStateChanged(async (user) => {
+      if (user) {
+        this.$store.commit('toggleSignInMode', true)
+        const { uid } = user
+        await updateLatestMetaToStore({ uid })
+        
+        // remove 'none' class from all ul.links
+        const links = document.querySelectorAll('li.links')
+        links.forEach(link => link.classList.remove('none'))
+
+        // this.$router.push('/words')
+      } else {
+        // this.$router.push('/')
+      }
+    })
   },
   methods: {
     signOutUser: function() {
