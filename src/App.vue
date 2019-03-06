@@ -69,5 +69,20 @@ export default {
     font-size: 1em;
     cursor: pointer;
   }
+
+  button.icon {
+    background: transparent;
+    color: darkslategrey;
+    padding: 0.3em;
+    font-size: 1.5em;
+  }
+
+  button.icon.bg-red {
+    color: red;
+  }
+
+  button.icon a {
+    color: darkslategray;
+  }
 </style>
 

@@ -12,12 +12,11 @@
       <button type="reset" id="cancel" @click="hideAddToListForm">Cancel</button>
     </form>
     <div class="controls">
-      <button :disabled="!isUserLoggedIn" id="addWord" @click="showAddWordForm">Add</button>
-      <button :disabled="!isUserLoggedIn" id="clearWords" @click="clearAllWords">Clear All</button>
-      <button :disabled="!isUserLoggedIn" v-if="!isRemoveWordEnabled" id="removeWordsEnable" @click="removeWordsToggle">Remove Words</button>
-      <button :disabled="!isUserLoggedIn" v-if="isRemoveWordEnabled" id="removeWordsDisable" @click="removeWordsToggle">Done Removing Words</button>
-      <button :disabled="!isUserLoggedIn" v-if="isUserLoggedIn && isDefaultList" id="saveToList" @click="showSaveToListForm">Save To List</button>
-      <button :disabled="!isUserLoggedIn" v-if="isUserLoggedIn"><router-link to='/lists' exact>Manage Lists</router-link></button>
+      <button class="icon" :disabled="!isUserLoggedIn" id="addWord" @click="showAddWordForm"><fa-icon icon="plus"></fa-icon></button>
+      <button class="icon" :disabled="!isUserLoggedIn" id="clearWords" @click="clearAllWords"><fa-icon icon="recycle"></fa-icon></button>
+      <button class="icon bg-green" :disabled="!isUserLoggedIn" v-if="!isRemoveWordEnabled" id="removeWordsEnable" @click="removeWordsToggle"><fa-icon icon="trash-alt"></fa-icon></button>
+      <button class="icon" :disabled="!isUserLoggedIn" v-if="isRemoveWordEnabled" id="removeWordsDisable" @click="removeWordsToggle"><fa-icon icon="trash-alt"></fa-icon></button>
+      <button class="icon bg-green" :disabled="!isUserLoggedIn" v-if="isUserLoggedIn && isDefaultList" id="saveToList" @click="showSaveToListForm"><fa-icon icon="folder-plus"></fa-icon></button>
     </div>
   </section>
 </template>
@@ -311,20 +310,20 @@ export default {
 </script>
 
 <style>
-.router-link-exact-active.router-link-active {
+/* .router-link-exact-active.router-link-active {
   display: none;
-}
+} */
 
 form#add-word-form, form#add-to-list-form {
   display: block;
 }
 
 button#removeWordsDisable {
-  background-color: green;
+  color: green !important;
 }
 
 button#removeWordsEnable {
-  background-color: red;
+  color: red !important;
 }
 
 button a {
