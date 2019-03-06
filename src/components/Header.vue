@@ -63,7 +63,7 @@ export default {
         const links = document.querySelectorAll('li.links')
         links.forEach(link => link.classList.remove('none'))
 
-        // this.$router.push('/words')
+        this.$router.push('/words')
       } else {
         // this.$router.push('/')
       }
