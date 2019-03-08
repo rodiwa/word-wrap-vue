@@ -47,6 +47,7 @@ const renderListsToCanvas = (listsSnapshot) => {
     const div = document.createElement('div')
 
     const span = document.createElement('span')
+    span.classList.add('list-title')
     span.textContent = listItem.name
     div.appendChild(span)
     li.appendChild(div)
@@ -197,7 +198,8 @@ export default {
 
   ul.lists > li {
     list-style: none;
-    padding: 0.5em 0;
+    padding: 1em 0;
     cursor: pointer;
+    border-bottom: 1px solid #ccc;
   }
 </style>
