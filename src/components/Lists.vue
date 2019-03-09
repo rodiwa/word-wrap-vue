@@ -199,6 +199,7 @@ export default {
     background-color: lightyellow;
     padding: 20px;
     border-radius: 5px;
+    box-shadow: #f2f2f2 3px 3px 3px;
   }
 
   ul.lists > li {
