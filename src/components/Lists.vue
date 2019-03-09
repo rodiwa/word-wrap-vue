@@ -1,6 +1,6 @@
 <template>
   <section>
-    <ul class="lists"></ul>
+    <ul class="lists none"></ul>
     <div id="no-lists-message" class="none">No lists added. Click 'Create List' to start adding one!</div>
     <form id="add-to-list-form" @submit.prevent="createNewList" class="addToList none">
       <input type="text" id="newListName" autocomplete="off" placeholder="Name Your List">
@@ -88,6 +88,8 @@ export default {
               renderNoListsMessageToCanvas()
             } else {
               renderListsToCanvas(listResponse)
+              const ul = document.querySelector('ul.lists')
+              ul.classList.remove('none')
             }
           })
         .then(() => {
@@ -194,12 +196,19 @@ export default {
 <style>
   ul.lists {
     padding-left: 0;
+    background-color: lightyellow;
+    padding: 20px;
+    border-radius: 5px;
   }
 
   ul.lists > li {
     list-style: none;
     padding: 1em 0;
     cursor: pointer;
-    border-bottom: 1px solid #ccc;
+    border-bottom: 2px dotted gold;
+  }
+  
+  ul.lists > li:last-child {
+    border-bottom: none;
   }
 </style>
