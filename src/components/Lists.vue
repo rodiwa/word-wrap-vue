@@ -1,6 +1,10 @@
 <template>
   <section>
-    <ul class="lists none"></ul>
+    <ul class="lists none">
+      <li v-for="listItem in listResponseArr">
+        <list-item v-bind:details="listItem"></list-item>
+      </li>
+    </ul>
     <div id="no-lists-message" class="none">No lists added. Click 'Create List' to start adding one!</div>
     <form id="add-to-list-form" @submit.prevent="createNewList" class="addToList none">
       <input type="text" id="newListName" autocomplete="off" placeholder="Name Your List">
@@ -18,6 +22,7 @@ import { store } from '../store'
 import firebase from '../firebase/init'
 import { remove } from 'lodash'
 import { updateMetaToCloudStore } from '../firebase/db'
+import ListItem from './ListItem.vue'
 
 const getActiveListId = async ({ firestore, auth }) => {
   if (store.state.activeListId && store.state.activeListId !== '') {
@@ -62,6 +67,9 @@ const renderNoListsMessageToCanvas = () => {
 
 export default {
   name: 'lists',
+  components: {
+    'list-item': ListItem
+  },
   beforeMount: async function() {
     const auth = firebase.auth()
     // if not logged in, goto home page
@@ -71,44 +79,51 @@ export default {
       }
     })
   },
+  data: function() {
+    return {
+      listResponseArr: []
+    }
+  },
   mounted: function() {
     const auth = firebase.auth()
     const firestore = firebase.firestore()
     auth.onAuthStateChanged(user => {
       if (user) {
-        firestore.collection(`users/${user.uid}/lists`).get()
-          .then(snapshot => {
+        firestore.collection(`users/${user.uid}/lists`)
+          .onSnapshot(snapshot => {
             // convert to array
             const listResponse = snapshot.docs.map(listItem => {
               return { ...listItem.data(), id: listItem.id }
             })
             // remove the 'default' list from response
             remove(listResponse, item => item.name === 'default')
+            
+            this.$data.listResponseArr = listResponse
+            
             if (listResponse.length < 1) {
               renderNoListsMessageToCanvas()
             } else {
-              renderListsToCanvas(listResponse)
               const ul = document.querySelector('ul.lists')
               ul.classList.remove('none')
             }
           })
-        .then(() => {
-          // add event listener
-          const listNames = document.querySelectorAll('li.list-name')
+        // .then(() => {
+        //   // add event listener
+        //   const listNames = document.querySelectorAll('li.list-name')
           
-          listNames.forEach(li => {
-            li.addEventListener('click', async (e) => {
-              const parentLiId = e.target.closest('li').id
-              this.$store.commit('setSelectedListName', e.target.textContent)
-              this.$store.commit('setActiveListId', parentLiId)
+        //   listNames.forEach(li => {
+        //     li.addEventListener('click', async (e) => {
+        //       const parentLiId = e.target.closest('li').id
+        //       this.$store.commit('setSelectedListName', e.target.textContent)
+        //       this.$store.commit('setActiveListId', parentLiId)
               
-              const { uid } = user
-              await updateMetaToCloudStore({ uid })
+        //       const { uid } = user
+        //       await updateMetaToCloudStore({ uid })
               
-              this.$router.push('/words')
-            })
-          })
-        })
+        //       this.$router.push('/words')
+        //     })
+        //   })
+        // })
       }
     })
   },
@@ -204,7 +219,7 @@ export default {
 
   ul.lists > li {
     list-style: none;
-    padding: 1em 0;
+    padding: 0.6em 0;
     cursor: pointer;
     border-bottom: 2px dotted gold;
   }

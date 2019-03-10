@@ -17,6 +17,16 @@ export const store = new Vuex.Store({
     userId: '',
   },
   mutations: {
+    resetState: (state) => {
+      state.isRemoveModeEnabled = false
+      state.isUserLoggedIn = false
+      state.activeListId = ''
+      state.defaultListId = ''
+      state.currentMetaId = 'meta'
+      state.isDefaultList = true
+      state.selectListName = ''
+      state.userId = ''
+    },
     toggleRemoveWordMode: (state) => {
       state.isRemoveModeEnabled = !state.isRemoveModeEnabled
     },

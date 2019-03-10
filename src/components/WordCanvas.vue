@@ -364,9 +364,6 @@ section .words {
   height: 100%;
   align-items: center;
   align-content: center;
-  background-color: lightyellow;
-  border-radius: 5px;
-  box-shadow: #f2f2f2 3px 3px 3px;
 }
 
 /* styles for words */
