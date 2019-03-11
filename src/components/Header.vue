@@ -19,12 +19,12 @@
           <button class="icon" :disabled="!isUserLoggedIn" v-if="isUserLoggedIn"><router-link to='/lists' exact><fa-icon icon="list"></fa-icon></router-link></button>
         </router-link>
       </li>
-      <li v-if="!isUserLoggedIn" class="links none">
+      <li v-if="!isUserLoggedIn" class="links">
         <router-link to='/login' exact>
           <button class="icon"><fa-icon icon="sign-in-alt"></fa-icon></button>
         </router-link>
       </li>
-      <li v-if="isUserLoggedIn" class="links none">
+      <li v-if="isUserLoggedIn" class="links">
           <button class="icon" @click="signOutUser"><fa-icon icon="sign-out-alt"></fa-icon></button>
       </li>
     </div>
@@ -42,14 +42,16 @@ export default {
     isUserLoggedIn: (context) =>
       context.$store.state.isUserLoggedIn,
     getHeader: (context) => {
-      const currentPath = context.$router.currentRoute.path
-      switch (currentPath) {
-        case '/':
-        case '/lists':
-          return `Word Wrap`
-        case '/words':
-          return `Lists`
-      }
+      // TODO does not change router at times
+      // const currentPath = context.$router.currentRoute.path
+      // switch (currentPath) {
+      //   case '/':
+      //   case '/words':
+      //     return `Word Wrap`
+      //   case '/lists':
+      //     return `Manage Lists`
+      // }
+      return 'Word Wrap'
     },
   },
   beforeMount: function() {
@@ -73,11 +75,12 @@ export default {
     signOutUser: function() {
       const auth = firebase.auth()
       auth.signOut().then(() => {
-        this.updateLoggedInStatus()
+        store.commit('resetState')
+        this.$router.push('/login')
+        console.log(this)
+        console.log(this.$router)
+        console.log(this.$router.push)
       })
-    },
-    updateLoggedInStatus() {
-      this.$store.commit('toggleSignInMode')
     }
   }
 }
