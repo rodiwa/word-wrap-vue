@@ -42,14 +42,16 @@ export default {
     isUserLoggedIn: (context) =>
       context.$store.state.isUserLoggedIn,
     getHeader: (context) => {
-      const currentPath = context.$router.currentRoute.path
-      switch (currentPath) {
-        case '/':
-        case '/lists':
-          return `Word Wrap`
-        case '/words':
-          return `Lists`
-      }
+      // TODO does not change router at times
+      // const currentPath = context.$router.currentRoute.path
+      // switch (currentPath) {
+      //   case '/':
+      //   case '/words':
+      //     return `Word Wrap`
+      //   case '/lists':
+      //     return `Manage Lists`
+      // }
+      return 'Word Wrap'
     },
   },
   beforeMount: function() {

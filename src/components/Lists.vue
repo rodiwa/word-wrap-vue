@@ -1,5 +1,5 @@
 <template>
-  <section>
+  <section id="lists">
     <ul class="lists none">
       <li v-for="listItem in listResponseArr">
         <list-item v-bind:details="listItem"></list-item>
@@ -209,12 +209,25 @@ export default {
 </script>
 
 <style>
+  section#lists {
+    padding: 0;
+  }
+  
   #no-lists-message {
     margin: auto;
   }
 
-  ul.lists {
-    padding-left: 0;
+  section#lists form#add-to-list-form {
+    padding: 1em;
+  }
+
+  section#lists .controls {
+    padding: 1em;
+  }
+
+  section#lists ul.lists {
+    padding: 1em;
+    margin: 0;
     /* padding: 20px;
     background-color: lightyellow;
     border-radius: 5px;
@@ -228,7 +241,26 @@ export default {
     border-bottom: 2px dotted gold;
   }
   
+  ul.lists > li:first-child {
+    padding-top: 0;
+  }
+  
   ul.lists > li:last-child {
     border-bottom: none;
+  }
+
+  /* https://stackoverflow.com/questions/16443380/common-css-media-queries-break-points */ 
+  @media only screen and (max-width: 767px){
+    section#lists {
+      /* background-color: blue; */
+      width: 100%
+    }
+  }
+
+  @media only screen and (min-width: 768px) {
+    section#lists {
+      /* background-color: yellow; */
+      width: 50%
+    }
   }
 </style>
