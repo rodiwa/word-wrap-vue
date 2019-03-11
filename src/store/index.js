@@ -48,7 +48,7 @@ export const store = new Vuex.Store({
     // setCurrentMetaId: (state, id) => {
     //   state.currentMetaId = id
     // },
-    setIsDefaultList: (state, isDefaultList) => {
+    setIsDefaultList: (state, isDefaultList = true) => {
       state.isDefaultList = isDefaultList
     },
     setDefaultListId: (state, id) =>

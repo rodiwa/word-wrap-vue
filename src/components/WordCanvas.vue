@@ -2,7 +2,7 @@
   <section id="wordCanvas">
     <div v-if="isUserLoggedIn">{{ this.getListName }}</div>
     <div v-if="!isUserLoggedIn" id="no-login-message"><span>Your chart will be reset once you leave this page! <b>Login</b> to save and use more features!</span></div>
-    <div class="words" v-bind:class="{remove: isRemoveWordEnabled, none: true}"></div>
+    <div class="words" v-bind:class="{remove: isRemoveWordEnabled}"></div>
     <form id="add-word-form" @submit.prevent="addNewWord" class="addWord none">
       <input type="text" id="addWordInput" autocomplete="off" placeholder="Add Word">
       <button type="reset" id="cancel" @click="hideAddWordForm">Cancel</button>

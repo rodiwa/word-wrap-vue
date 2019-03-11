@@ -62,7 +62,7 @@ const renderListsToCanvas = (listsSnapshot) => {
 
 const renderNoListsMessageToCanvas = () => {
   const noListsMessage = document.getElementById('no-lists-message')
-  noListsMessage.classList.remove('none')
+  !!noListsMessage && noListsMessage.classList.remove('none')
 }
 
 export default {
@@ -104,7 +104,7 @@ export default {
               renderNoListsMessageToCanvas()
             } else {
               const ul = document.querySelector('ul.lists')
-              ul.classList.remove('none')
+              !!ul && ul.classList.remove('none')
             }
           })
         // .then(() => {
@@ -209,12 +209,16 @@ export default {
 </script>
 
 <style>
+  #no-lists-message {
+    margin: auto;
+  }
+
   ul.lists {
     padding-left: 0;
+    /* padding: 20px;
     background-color: lightyellow;
-    padding: 20px;
     border-radius: 5px;
-    box-shadow: #f2f2f2 3px 3px 3px;
+    box-shadow: #f2f2f2 3px 3px 3px; */
   }
 
   ul.lists > li {
