@@ -157,8 +157,11 @@ export default {
         return console.error('Enter a list name')
       }
 
+      // hide add new list form
+      this.hideSaveToListForm()
+
       let newListId = ''
-      const activeListId = await getActiveListId({ firestore, auth })
+      const activeListId = store.state.activeListId // await getActiveListId({ firestore, auth })
       let currentlyAddedWords = []
 
       // create new list and get its id
@@ -168,23 +171,23 @@ export default {
 
       // create new list with name added by user
       console.log('create new list')
-      await firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(activeListId).collection('words').get().then(async snapshot => {
+      firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(activeListId).collection('words').get().then(async snapshot => {
         // add new list name to created list
-        await firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(newListId).set({ name: listName })
+        firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(newListId).set({ name: listName })
 
         // save currently added words to new list
         console.log('save words to new list')
         snapshot.docs.forEach(async doc => {
-          await firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(newListId).collection('words').add(doc.data())
+          firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(newListId).collection('words').add(doc.data())
         })
 
         // set current active list in store, firestore/user/meta
         console.log('update meta with new state')
         store.commit('setActiveListId', newListId)
 
-        await firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(newListId).collection('words').get().then(async snapshot => {
+        firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(newListId).collection('words').get().then(async snapshot => {
           snapshot.docs.forEach(async doc => {
-            await firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(newListId).collection('words').doc(doc.id).delete()
+            firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(newListId).collection('words').doc(doc.id).delete()
           })
         })
 
@@ -194,14 +197,11 @@ export default {
         store.commit('setSelectedListName', listName.trim())
 
         const { uid } = auth.currentUser
-        await updateMetaToCloudStore({ uid })
+        updateMetaToCloudStore({ uid })
 
         // reload component with current active list
         this.$router.push('/words')
       })
-
-      // after all is done, hide add new list form
-      this.hideSaveToListForm()
     }
   }
 }
