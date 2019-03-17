@@ -24,7 +24,7 @@ export default {
       this.$store.commit('setSelectedListName', listName)
       this.$store.commit('setActiveListId', uid)
       
-      await updateMetaToCloudStore({ uid })
+      updateMetaToCloudStore({ uid: store.state.userId })
       this.$router.push('/words')
     },
     deleteListItem: async function(uid) {

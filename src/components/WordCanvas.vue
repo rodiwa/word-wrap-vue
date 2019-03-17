@@ -269,14 +269,14 @@ export default {
 
       // create new list with name added by user
       console.log('create new list')
-      await firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(activeListId).collection('words').get().then(async snapshot => {
+      firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(activeListId).collection('words').get().then(async snapshot => {
         // add new list name to created list
-        await firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(newListId).set({ name: listName })
+        firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(newListId).set({ name: listName })
 
         // save currently added words to new list
         console.log('save words to new list')
         snapshot.docs.forEach(async doc => {
-          await firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(newListId).collection('words').add(doc.data())
+          firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(newListId).collection('words').add(doc.data())
         })
 
         // set current active list in store, firestore/user/meta
@@ -286,9 +286,9 @@ export default {
         // delete words from default list
         console.log('delete words from default list')
         const defaultListId = store.state.defaultListId
-        await firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(defaultListId).collection('words').get().then(async snapshot => {
+        firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(defaultListId).collection('words').get().then(async snapshot => {
           snapshot.docs.forEach(async doc => {
-            await firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(defaultListId).collection('words').doc(doc.id).delete()
+            firestore.collection(`users/${auth.currentUser.uid}/lists`).doc(defaultListId).collection('words').doc(doc.id).delete()
           })
         })
 
